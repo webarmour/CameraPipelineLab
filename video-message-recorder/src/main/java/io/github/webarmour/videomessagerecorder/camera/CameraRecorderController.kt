@@ -70,12 +70,14 @@ internal class CameraRecorderController(
         val profile: CameraProfile,
         val renderer: CameraGlRenderer,
         val inputSurface: Surface,
+        val useRearGlZoom: Boolean = false,
     ) {
         var prewarmReader: ImageReader? = null
         val prewarmReaderFrames = AtomicLong(0L)
         val cameraZoomRange = profile.characteristics.zoomRatioRangeCompat()
-        // Front camera uses GL shader digital zoom; Rear camera uses Camera2 hardware sensor zoom (CONTROL_ZOOM_RATIO / SCALER_CROP_REGION).
-        val zoomInRenderer = profile.role == CameraRole.FRONT
+        // Front camera uses GL shader digital zoom by default; Rear camera can also use GL zoom on 1x lens if enabled.
+        val zoomInRenderer = profile.role == CameraRole.FRONT ||
+            (profile.role == CameraRole.REAR_WIDE && useRearGlZoom)
         val concurrentZoomRange = Range(
             1f,
             minOf(
@@ -734,6 +736,7 @@ internal class CameraRecorderController(
                 profile = profile,
                 renderer = renderer,
                 inputSurface = inputSurface,
+                useRearGlZoom = config.enableRearGlZoom,
             ).also { pipeline ->
                 if (profile.role == activeRole) pipeline.zoomRatio = config.zoomRatio
                 if (pipeline.zoomInRenderer) {

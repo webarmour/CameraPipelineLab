@@ -129,7 +129,7 @@ enum class FocusSetting {
     MANUAL,
 }
 
-data class RecordingConfig(
+data class RecordingConfig @JvmOverloads constructor(
     val quality: VideoQuality = VideoQuality.HD,
     val videoBitrate: Int = 2_500_000,
     val frameRate: Int = 60,
@@ -163,6 +163,7 @@ data class RecordingConfig(
     val focus: FocusSetting = FocusSetting.CONTINUOUS_VIDEO,
     val manualFocusDistance: Float = 0f,
     val zoomRatio: Float = 1f,
+    val enableRearGlZoom: Boolean = false,
     val aperture: Float? = null,
     val circleMaskInSavedVideo: Boolean = false,
     val hidePreviewUntilRecording: Boolean = false,
