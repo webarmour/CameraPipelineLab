@@ -66,15 +66,17 @@ internal class CameraRecorderController(
         val profile: CameraProfile,
         val renderer: CameraGlRenderer,
         val inputSurface: Surface,
+        val useRearGlZoom: Boolean = false,
     ) {
         val cameraZoomRange = profile.characteristics.zoomRatioRangeCompat()
         // Zoom the shared preview/encoder texture without reconfiguring the camera stream.
-        // A front camera with a zoom-out lens keeps Camera2 zoom to preserve its full range.
+        // Keep Camera2 zoom for front cameras with a zoom-out lens; rear GL zoom can be enabled in config.
         val zoomInRenderer =
             (profile.role == CameraRole.FRONT && cameraZoomRange.lower >= 1f) ||
                 (profile.role == CameraRole.REAR_WIDE &&
-                    profile.characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
-                        ?.contains(CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) == true)
+                    (useRearGlZoom ||
+                        profile.characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+                            ?.contains(CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA) == true))
         val concurrentZoomRange = Range(
             1f,
             minOf(
@@ -707,6 +709,7 @@ internal class CameraRecorderController(
                 profile = profile,
                 renderer = renderer,
                 inputSurface = inputSurface,
+                useRearGlZoom = config.enableRearGlZoom,
             ).also { pipeline ->
                 if (profile.role == activeRole) pipeline.zoomRatio = config.zoomRatio
                 if (pipeline.zoomInRenderer) {
